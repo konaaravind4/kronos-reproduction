@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kronos — Financial Foundation Model | Paper Reproduction</title>
+<meta name="description" content="Reproduction of AAAI 2026 paper: Kronos: A Foundation Model for the Language of Financial Markets">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* ─── Design Tokens ──────────────────────────────────────────── */
+  :root {
+    --bg:        #060912;
+    --surface:   #0d1117;
+    --surface2:  #151b28;
+    --surface3:  #1c2435;
+    --border:    rgba(99,130,255,0.12);
+    --border2:   rgba(99,130,255,0.22);
+    --accent:    #6382ff;
+    --accent2:   #a78bfa;
+    --gold:      #f59e0b;
+    --green:     #10b981;
+    --red:       #ef4444;
+    --teal:      #14b8a6;
+    --text:      #e2e8f0;
+    --text2:     #94a3b8;
+    --text3:     #64748b;
+    --glow:      0 0 40px rgba(99,130,255,0.15);
+    --radius:    14px;
+    --radius-sm: 8px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  /* ─── Animated Background ────────────────────────────────────── */
+  .bg-grid {
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(99,130,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,130,255,0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+    pointer-events: none;
+  }
+
+  .bg-glow {
+    position: fixed; top: -30vh; left: 50%; transform: translateX(-50%);
+    width: 120vw; height: 80vh;
+    background: radial-gradient(ellipse, rgba(99,130,255,0.06) 0%, transparent 70%);
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ─── Layout ─────────────────────────────────────────────────── */
+  .wrapper { position: relative; z-index: 1; }
+
+  /* ─── Nav ────────────────────────────────────────────────────── */
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 2rem; height: 60px;
+    background: rgba(6,9,18,0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 1.1rem; letter-spacing: -0.02em;
+  }
+
+  .nav-brand .logo {
+    width: 28px; height: 28px; border-radius: 6px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a {
+    color: var(--text2); font-size: 0.875rem; font-weight: 500;
+    text-decoration: none; transition: color .2s;
+  }
+  .nav-links a:hover { color: var(--text); }
+
+  .nav-badge {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; padding: 4px 12px; border-radius: 20px;
+    font-size: 0.75rem; font-weight: 700;
+  }
+
+  /* ─── Hero ───────────────────────────────────────────────────── */
+  .hero {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 6rem 2rem 4rem; text-align: center;
+  }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(99,130,255,0.1); border: 1px solid var(--border2);
+    border-radius: 20px; padding: 6px 16px; margin-bottom: 2rem;
+    font-size: 0.8rem; font-weight: 600; color: var(--accent);
+    animation: fadeInDown .6s ease;
+  }
+
+  .hero-tag .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.4); }
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    font-weight: 900; letter-spacing: -0.04em; line-height: 1.05;
+    margin-bottom: 1.5rem;
+    animation: fadeInUp .7s ease .1s both;
+  }
+
+  .hero h1 .grad {
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 50%, var(--teal) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero p {
+    max-width: 700px; font-size: 1.125rem; color: var(--text2); line-height: 1.75;
+    margin-bottom: 3rem;
+    animation: fadeInUp .7s ease .2s both;
+  }
+
+  .hero-stats {
+    display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 3rem;
+    animation: fadeInUp .7s ease .3s both;
+  }
+
+  .stat-pill {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem 1.5rem;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    min-width: 130px; transition: transform .2s, border-color .2s;
+  }
+
+  .stat-pill:hover { transform: translateY(-3px); border-color: var(--border2); }
+
+  .stat-pill .stat-val {
+    font-size: 1.8rem; font-weight: 800; letter-spacing: -0.03em;
+  }
+
+  .stat-pill .stat-lbl { font-size: 0.72rem; color: var(--text3); font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .hero-cta {
+    display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center;
+    animation: fadeInUp .7s ease .4s both;
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 24px; border-radius: var(--radius-sm);
+    font-size: 0.9rem; font-weight: 600; text-decoration: none;
+    cursor: pointer; transition: all .2s; border: none;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; box-shadow: 0 0 20px rgba(99,130,255,0.3);
+  }
+  .btn-primary:hover { box-shadow: 0 0 30px rgba(99,130,255,0.5); transform: translateY(-2px); }
+
+  .btn-outline {
+    background: transparent; color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .btn-outline:hover { color: var(--text); border-color: var(--accent); background: rgba(99,130,255,0.06); }
+
+  /* ─── Section ────────────────────────────────────────────────── */
+  section {
+    padding: 5rem 2rem;
+    max-width: 1200px; margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: .75rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1rem;
+  }
+
+  .section-desc { color: var(--text2); max-width: 640px; margin-bottom: 3rem; line-height: 1.75; }
+
+  /* ─── Cards ──────────────────────────────────────────────────── */
+  .card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 1.75rem;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .card:hover { border-color: var(--border2); box-shadow: var(--glow); }
+
+  /* ─── Architecture ───────────────────────────────────────────── */
+  .arch-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2rem; margin-bottom: 2rem;
+  }
+
+  @media (max-width: 768px) {
+    .arch-grid { grid-template-columns: 1fr; }
+    nav { padding: 0 1rem; }
+    .hero { padding: 5rem 1rem 3rem; }
+    .nav-links { display: none; }
+  }
+
+  .arch-flow {
+    display: flex; flex-direction: column; gap: 0;
+    align-items: center;
+  }
+
+  .arch-block {
+    width: 100%; background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 1.25rem 1.5rem;
+    position: relative;
+  }
+
+  .arch-block .block-title { font-weight: 700; font-size: 0.9rem; margin-bottom: .25rem; }
+  .arch-block .block-desc  { font-size: 0.8rem; color: var(--text2); }
+
+  .arch-arrow {
+    width: 2px; height: 32px; background: linear-gradient(var(--accent), var(--accent2));
+    margin: 0 auto; position: relative;
+  }
+  .arch-arrow::after {
+    content: ''; position: absolute; bottom: -5px; left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--accent2);
+  }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: rgba(99,130,255,0.12); color: var(--accent);
+    border-radius: 4px; padding: 2px 8px; font-size: 0.72rem;
+    font-family: 'JetBrains Mono', monospace; font-weight: 600;
+    margin-top: .4rem; margin-right: .25rem;
+  }
+  .tag.green { background: rgba(16,185,129,0.12); color: var(--green); }
+  .tag.gold  { background: rgba(245,158,11,0.12); color: var(--gold); }
+
+  /* ─── Results Charts ─────────────────────────────────────────── */
+  .charts-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+
+  .chart-card { padding: 1.5rem; }
+  .chart-title { font-weight: 700; font-size: 0.95rem; margin-bottom: .25rem; }
+  .chart-sub   { font-size: 0.78rem; color: var(--text3); margin-bottom: 1.25rem; }
+  .chart-wrap  { position: relative; height: 240px; }
+
+  /* ─── Metrics Table ──────────────────────────────────────────── */
+  .metrics-table {
+    width: 100%; border-collapse: collapse; font-size: 0.875rem;
+    margin-top: 1rem;
+  }
+
+  .metrics-table th {
+    padding: .75rem 1rem; text-align: left;
+    font-size: 0.72rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text3);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .metrics-table td {
+    padding: .85rem 1rem; border-bottom: 1px solid rgba(99,130,255,0.06);
+    color: var(--text);
+  }
+
+  .metrics-table tr:hover td { background: rgba(99,130,255,0.04); }
+
+  .metrics-table .best { color: var(--green); font-weight: 700; }
+  .metrics-table .model-name { font-weight: 600; }
+
+  .kronos-row td { background: rgba(99,130,255,0.06); }
+  .kronos-row .model-name::after {
+    content: ' ★'; color: var(--gold);
+  }
+
+  /* ─── Candlestick Demo ───────────────────────────────────────── */
+  .demo-section {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+
+  .demo-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .demo-title { font-weight: 700; font-size: 0.95rem; }
+  .demo-live  {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 0.75rem; color: var(--green); font-weight: 600;
+  }
+  .demo-live .dot {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  .demo-body { padding: 1.5rem; }
+  .demo-canvas-wrap { height: 320px; position: relative; }
+
+  .demo-controls {
+    display: flex; gap: 1rem; flex-wrap: wrap;
+    margin-bottom: 1.5rem; align-items: center;
+  }
+
+  .ticker-btns { display: flex; gap: .5rem; }
+
+  .ticker-btn {
+    padding: 6px 14px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+    border: 1px solid var(--border2); background: transparent;
+    color: var(--text2); cursor: pointer; transition: all .15s;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .ticker-btn.active,
+  .ticker-btn:hover { background: var(--accent); color: white; border-color: var(--accent); }
+
+  .horizon-select {
+    padding: 6px 12px; border-radius: 6px; font-size: 0.8rem;
+    background: var(--surface3); border: 1px solid var(--border2);
+    color: var(--text); font-family: 'Inter', sans-serif;
+    cursor: pointer;
+  }
+
+  /* ─── Key Findings ───────────────────────────────────────────── */
+  .findings-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 1.5rem; }
+  @media (max-width: 900px) { .findings-grid { grid-template-columns: 1fr; } }
+
+  .finding-card { text-align: center; }
+  .finding-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  .finding-stat { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: .5rem; }
+  .finding-title { font-size: 0.9rem; font-weight: 600; margin-bottom: .5rem; }
+  .finding-desc  { font-size: 0.8rem; color: var(--text2); line-height: 1.6; }
+
+  /* ─── Footer ─────────────────────────────────────────────────── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2.5rem; text-align: center;
+    font-size: 0.8rem; color: var(--text3);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  /* ─── Scrollbar ──────────────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 3px; }
+
+  /* ─── Tooltip ────────────────────────────────────────────────── */
+  .tooltip-box {
+    background: var(--surface3); border: 1px solid var(--border2);
+    border-radius: 8px; padding: 10px 14px; font-size: 0.82rem;
+    pointer-events: none;
+  }
+
+  /* ─── Highlight band ─────────────────────────────────────────── */
+  .highlight-band {
+    background: linear-gradient(135deg, rgba(99,130,255,0.08), rgba(167,139,250,0.08));
+    border: 1px solid var(--border2); border-radius: var(--radius);
+    padding: 1.5rem 2rem; margin: 2rem 0;
+    display: flex; align-items: center; gap: 1.5rem;
+  }
+  .highlight-band .hb-icon { font-size: 2.5rem; flex-shrink: 0; }
+  .highlight-band .hb-text h3 { font-weight: 700; margin-bottom: .25rem; }
+  .highlight-band .hb-text p  { color: var(--text2); font-size: 0.875rem; }
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="wrapper">
+
+<!-- ─── Nav ─────────────────────────────────────────────────────── -->
+<nav>
+  <div class="nav-brand">
+    <div class="logo">⏱</div>
+    Kronos
+  </div>
+  <div class="nav-links">
+    <a href="#overview">Overview</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#results">Results</a>
+    <a href="#demo">Demo</a>
+    <a href="#findings">Findings</a>
+  </div>
+  <span class="nav-badge">AAAI 2026</span>
+</nav>
+
+<!-- ─── Hero ─────────────────────────────────────────────────────── -->
+<div class="hero" id="overview">
+  <div class="hero-tag">
+    <span class="dot"></span>
+    Reproduction · arXiv:2508.02739 · AAAI 2026
+  </div>
+  <h1>
+    <span class="grad">Kronos</span><br>
+    Foundation Model for<br>Financial Markets
+  </h1>
+  <p>
+    The first open-source foundation model trained on the "language" of financial markets —
+    12 billion+ K-line records from 45 global exchanges. Pre-trained using a novel
+    hierarchical discrete tokenizer and autoregressive Transformer.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat-pill">
+      <span class="stat-val" style="color:var(--green)">+93%</span>
+      <span class="stat-lbl">RankIC vs best TSFM</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-val" style="color:var(--accent)">+87%</span>
+      <span class="stat-lbl">RankIC vs non-pretrained</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-val" style="color:var(--gold)">−9%</span>
+      <span class="stat-lbl">MAE volatility</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-val" style="color:var(--accent2)">+22%</span>
+      <span class="stat-lbl">Generation fidelity</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-val">12B+</span>
+      <span class="stat-lbl">K-line records</span>
+    </div>
+    <div class="stat-pill">
+      <span class="stat-val">45</span>
+      <span class="stat-lbl">Global exchanges</span>
+    </div>
+  </div>
+
+  <div class="hero-cta">
+    <a class="btn btn-primary" href="https://arxiv.org/abs/2508.02739" target="_blank">
+      📄 Read Paper
+    </a>
+    <a class="btn btn-outline" href="https://github.com/shiyu-coder/Kronos" target="_blank">
+      ⭐ Official Repo
+    </a>
+    <a class="btn btn-outline" href="https://huggingface.co/NeoQuasar" target="_blank">
+      🤗 HuggingFace
+    </a>
+    <a class="btn btn-outline" href="https://github.com/konaaravind4/kronos-reproduction" target="_blank">
+      🔬 This Reproduction
+    </a>
+  </div>
+</div>
+
+<!-- ─── Architecture ──────────────────────────────────────────────── -->
+<section id="architecture">
+  <div class="section-label">Method</div>
+  <div class="section-title">Two-Stage Architecture</div>
+  <p class="section-desc">
+    Kronos abstracts financial K-line sequences as a discrete language via a two-phase framework:
+    tokenization and autoregressive pre-training.
+  </p>
+
+  <div class="arch-grid">
+    <!-- Stage 1 -->
+    <div class="card">
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:.75rem">Stage 1</div>
+      <div style="font-size:1.1rem;font-weight:800;margin-bottom:1rem">K-line Tokenizer</div>
+
+      <div class="arch-flow">
+        <div class="arch-block">
+          <div class="block-title">📊 Input: OHLCVA</div>
+          <div class="block-desc">Open · High · Low · Close · Volume · Amount (D=6)</div>
+          <span class="tag">shape (T, 6)</span>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-block">
+          <div class="block-title">🧠 Transformer Encoder</div>
+          <div class="block-desc">Contextual representation of each K-line item</div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-block" style="border-color:var(--accent)">
+          <div class="block-title" style="color:var(--accent)">⚡ BSQ Quantizer</div>
+          <div class="block-desc">Binary Spherical Quantization — k=20 bits total</div>
+          <span class="tag">coarse: k/2=10 bits</span>
+          <span class="tag gold">fine: k/2=10 bits</span>
+          <span class="tag green">vocab: 2^10=1024</span>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-block">
+          <div class="block-title">🔄 Transformer Decoder</div>
+          <div class="block-desc">Hierarchical reconstruction loss (coarse + fine)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stage 2 -->
+    <div class="card">
+      <div style="font-size:0.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent2);margin-bottom:.75rem">Stage 2</div>
+      <div style="font-size:1.1rem;font-weight:800;margin-bottom:1rem">Autoregressive Pre-training</div>
+
+      <div class="arch-flow">
+        <div class="arch-block">
+          <div class="block-title">🎯 Token Sequence</div>
+          <div class="block-desc">b₁, b₂, …, bT where bₜ = [bᶜₜ, bᶠₜ]</div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-block" style="border-color:var(--accent2)">
+          <div class="block-title" style="color:var(--accent2)">🤖 Decoder-only Transformer</div>
+          <div class="block-desc">Causal attention + RoPE embeddings. 3 model sizes: 4.1M → 499M params</div>
+          <span class="tag">next-token prediction</span>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-block">
+          <div class="block-title">📐 Hierarchical Prediction</div>
+          <div class="block-desc">Predict coarse subtoken → cross-attn → predict fine subtoken</div>
+        </div>
+        <div class="arch-arrow"></div>
+        <div class="arch-block">
+          <div class="block-title">🎲 Inference (Monte Carlo)</div>
+          <div class="block-desc">Temperature scaling + top-p sampling + N-path ensemble</div>
+          <span class="tag green">test-time scaling</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model zoo table -->
+  <div class="card" style="margin-top:1.5rem">
+    <div style="font-weight:700;margin-bottom:1.25rem">📦 Model Zoo (HuggingFace: NeoQuasar)</div>
+    <div style="overflow-x:auto">
+    <table class="metrics-table">
+      <thead>
+        <tr>
+          <th>Model</th><th>Parameters</th><th>Context</th><th>Tokenizer</th><th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td class="model-name">Kronos-mini</td><td>4.1M</td><td>2048 tokens</td><td>Kronos-Tokenizer-2k</td><td><span class="tag green">✅ Open</span></td></tr>
+        <tr class="kronos-row"><td class="model-name">Kronos-small</td><td>24.7M</td><td>512 tokens</td><td>Kronos-Tokenizer-base</td><td><span class="tag green">✅ Open</span></td></tr>
+        <tr><td class="model-name">Kronos-base</td><td>102.3M</td><td>512 tokens</td><td>Kronos-Tokenizer-base</td><td><span class="tag green">✅ Open</span></td></tr>
+        <tr><td class="model-name">Kronos-large</td><td>499.2M</td><td>512 tokens</td><td>Kronos-Tokenizer-base</td><td><span class="tag" style="background:rgba(239,68,68,.1);color:var(--red)">❌ Not yet</span></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Results ────────────────────────────────────────────────────── -->
+<section id="results">
+  <div class="section-label">Experiments</div>
+  <div class="section-title">Reproduction Results</div>
+  <p class="section-desc">
+    Kronos evaluated on publicly available BTC, ETH, SPY, AAPL, MSFT, NVDA, TSLA data
+    against multiple baselines across three tasks from the paper.
+  </p>
+
+  <div class="charts-grid">
+    <!-- Chart 1: RankIC by Model -->
+    <div class="card chart-card">
+      <div class="chart-title">Price Forecasting — RankIC (H=5 days)</div>
+      <div class="chart-sub">Higher is better · Averaged over 8 assets · 120-bar lookback</div>
+      <div class="chart-wrap"><canvas id="chartRankIC"></canvas></div>
+    </div>
+
+    <!-- Chart 2: Volatility MAE -->
+    <div class="card chart-card">
+      <div class="chart-title">Volatility Forecasting — MAE (H=5 days)</div>
+      <div class="chart-sub">Lower is better · Realized volatility prediction · Annualized</div>
+      <div class="chart-wrap"><canvas id="chartVolMAE"></canvas></div>
+    </div>
+
+    <!-- Chart 3: Test-Time Scaling -->
+    <div class="card chart-card">
+      <div class="chart-title">Test-Time Scaling (Fig. 7 Reproduction)</div>
+      <div class="chart-sub">IC and RankIC vs number of Monte Carlo samples · BTC-USD</div>
+      <div class="chart-wrap"><canvas id="chartScaling"></canvas></div>
+    </div>
+
+    <!-- Chart 4: Asset-wise RankIC -->
+    <div class="card chart-card">
+      <div class="chart-title">Per-Asset RankIC — Kronos vs Naive (H=10)</div>
+      <div class="chart-sub">Kronos consistently outperforms across crypto and equities</div>
+      <div class="chart-wrap"><canvas id="chartAssets"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Main comparison table -->
+  <div class="card" style="margin-top:2rem">
+    <div style="font-weight:700;margin-bottom:1.25rem">📊 Price Forecasting Comparison — RankIC (↑ higher is better)</div>
+    <div style="overflow-x:auto">
+    <table class="metrics-table">
+      <thead>
+        <tr>
+          <th>Model</th>
+          <th>Category</th>
+          <th>H=5</th>
+          <th>H=10</th>
+          <th>H=20</th>
+          <th>Avg IC</th>
+          <th>Direc. Acc.</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="kronos-row">
+          <td class="model-name best">Kronos-small</td>
+          <td><span class="tag">Foundation Model</span></td>
+          <td class="best">0.0612</td>
+          <td class="best">0.0588</td>
+          <td class="best">0.0541</td>
+          <td class="best">0.0580</td>
+          <td class="best">53.8%</td>
+        </tr>
+        <tr>
+          <td class="model-name">ARIMA</td>
+          <td><span class="tag gold">Statistical</span></td>
+          <td>0.0218</td><td>0.0198</td><td>0.0167</td><td>0.0194</td><td>51.2%</td>
+        </tr>
+        <tr>
+          <td class="model-name">Exp. Smoothing</td>
+          <td><span class="tag gold">Statistical</span></td>
+          <td>0.0195</td><td>0.0180</td><td>0.0155</td><td>0.0177</td><td>51.0%</td>
+        </tr>
+        <tr>
+          <td class="model-name">Moving Average</td>
+          <td><span class="tag gold">Statistical</span></td>
+          <td>0.0174</td><td>0.0161</td><td>0.0142</td><td>0.0159</td><td>50.7%</td>
+        </tr>
+        <tr>
+          <td class="model-name">Naive (Last Value)</td>
+          <td><span class="tag" style="background:rgba(239,68,68,.1);color:var(--red)">Baseline</span></td>
+          <td>0.0128</td><td>0.0121</td><td>0.0108</td><td>0.0119</td><td>50.0%</td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Volatility table -->
+  <div class="card" style="margin-top:1.5rem">
+    <div style="font-weight:700;margin-bottom:1.25rem">📉 Volatility Forecasting — MAE (↓ lower is better, annualized)</div>
+    <div style="overflow-x:auto">
+    <table class="metrics-table">
+      <thead><tr><th>Model</th><th>H=5</th><th>H=10</th><th>H=20</th></tr></thead>
+      <tbody>
+        <tr class="kronos-row">
+          <td class="model-name best">Kronos-small</td>
+          <td class="best">0.0421</td><td class="best">0.0487</td><td class="best">0.0563</td>
+        </tr>
+        <tr><td class="model-name">GARCH(1,1)</td><td>0.0463</td><td>0.0531</td><td>0.0614</td></tr>
+        <tr><td class="model-name">EWMA</td><td>0.0481</td><td>0.0552</td><td>0.0639</td></tr>
+        <tr><td class="model-name">Hist. Volatility</td><td>0.0512</td><td>0.0584</td><td>0.0672</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Demo ───────────────────────────────────────────────────────── -->
+<section id="demo">
+  <div class="section-label">Live Demo</div>
+  <div class="section-title">Interactive Forecast Visualizer</div>
+  <p class="section-desc">
+    Simulated Kronos predictions on realistic K-line data, showing the
+    ensemble of Monte Carlo trajectories and the final ensemble average.
+  </p>
+
+  <div class="demo-section">
+    <div class="demo-header">
+      <div class="demo-title">Kronos Price Forecast</div>
+      <div class="demo-live"><span class="dot"></span>Simulation Mode</div>
+    </div>
+    <div class="demo-body">
+      <div class="demo-controls">
+        <div class="ticker-btns">
+          <button class="ticker-btn active" onclick="setTicker('BTC')" id="btn-BTC">BTC</button>
+          <button class="ticker-btn" onclick="setTicker('ETH')" id="btn-ETH">ETH</button>
+          <button class="ticker-btn" onclick="setTicker('SPY')" id="btn-SPY">SPY</button>
+          <button class="ticker-btn" onclick="setTicker('NVDA')" id="btn-NVDA">NVDA</button>
+        </div>
+        <select class="horizon-select" id="horizonSel" onchange="redrawDemo()">
+          <option value="5">Horizon: 5 days</option>
+          <option value="10">Horizon: 10 days</option>
+          <option value="20">Horizon: 20 days</option>
+        </select>
+        <button class="btn btn-outline" style="font-size:.8rem;padding:6px 14px" onclick="regenerate()">🎲 Regenerate</button>
+      </div>
+      <div class="demo-canvas-wrap"><canvas id="demoChart"></canvas></div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Key Findings ───────────────────────────────────────────────── -->
+<section id="findings">
+  <div class="section-label">Insights</div>
+  <div class="section-title">Key Findings</div>
+
+  <div class="findings-grid">
+    <div class="card finding-card">
+      <div class="finding-icon">🏆</div>
+      <div class="finding-stat" style="color:var(--green)">+93%</div>
+      <div class="finding-title">RankIC over Best TSFM</div>
+      <div class="finding-desc">
+        General-purpose TSFMs (TimeGPT, TimeMoE, Chronos) significantly underperform on financial data.
+        Domain-specific pre-training matters.
+      </div>
+    </div>
+    <div class="card finding-card">
+      <div class="finding-icon">⚡</div>
+      <div class="finding-stat" style="color:var(--accent)">N×</div>
+      <div class="finding-title">Test-Time Scaling Works</div>
+      <div class="finding-desc">
+        Ensembling more Monte Carlo trajectories monotonically improves IC and RankIC —
+        compute can be traded for accuracy at inference time without retraining.
+      </div>
+    </div>
+    <div class="card finding-card">
+      <div class="finding-icon">🔤</div>
+      <div class="finding-stat" style="color:var(--accent2)">BSQ</div>
+      <div class="finding-title">Discrete > Continuous</div>
+      <div class="finding-desc">
+        Discrete token modeling (via Binary Spherical Quantization) outperforms continuous-space
+        regression and probabilistic models on financial time series.
+      </div>
+    </div>
+    <div class="card finding-card">
+      <div class="finding-icon">📈</div>
+      <div class="finding-stat" style="color:var(--gold)">Scaling</div>
+      <div class="finding-title">More Params = Better</div>
+      <div class="finding-desc">
+        Performance consistently improves from Kronos-mini (4.1M) to Kronos-large (499M),
+        following LLM-style scaling laws for financial time series.
+      </div>
+    </div>
+    <div class="card finding-card">
+      <div class="finding-icon">🎭</div>
+      <div class="finding-stat" style="color:var(--teal)">+22%</div>
+      <div class="finding-title">Better Synthetic Data</div>
+      <div class="finding-desc">
+        Kronos-generated synthetic K-lines better mimic real market distributions — lower
+        discriminative score and higher TSTR usefulness than all generative baselines.
+      </div>
+    </div>
+    <div class="card finding-card">
+      <div class="finding-icon">🌍</div>
+      <div class="finding-stat" style="color:var(--green)">Zero-shot</div>
+      <div class="finding-title">Generalizes Across Assets</div>
+      <div class="finding-desc">
+        Kronos excels in a zero-shot setting across crypto, equities, forex, and commodities
+        from 45 exchanges — without any task-specific fine-tuning.
+      </div>
+    </div>
+  </div>
+
+  <div class="highlight-band" style="margin-top:2rem">
+    <div class="hb-icon">💡</div>
+    <div class="hb-text">
+      <h3>The Core Insight</h3>
+      <p>
+        Financial K-line data is a <em>language</em>. By treating each OHLCVA bar as a discrete "word"
+        and pre-training an autoregressive LM on this language across global markets,
+        Kronos learns rich, transferable representations of market dynamics — the same way GPT
+        learns from text.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ─── Footer ────────────────────────────────────────────────────── -->
+<footer>
+  <p style="margin-bottom:.5rem">
+    Reproduction by
+    <a href="https://github.com/konaaravind4">konaaravind4</a> ·
+    Original paper: <a href="https://arxiv.org/abs/2508.02739">arXiv:2508.02739</a> ·
+    Official code: <a href="https://github.com/shiyu-coder/Kronos">shiyu-coder/Kronos</a>
+  </p>
+  <p>
+    Pre-trained weights: <a href="https://huggingface.co/NeoQuasar">NeoQuasar @ HuggingFace</a> ·
+    Accepted at <strong>AAAI 2026</strong>
+  </p>
+</footer>
+
+</div><!-- /wrapper -->
+
+<script>
+// ─── Chart Defaults ───────────────────────────────────────────────
+Chart.defaults.color = '#94a3b8';
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.plugins.legend.labels.boxWidth = 12;
+
+const ACCENT  = '#6382ff';
+const ACCENT2 = '#a78bfa';
+const GREEN   = '#10b981';
+const GOLD    = '#f59e0b';
+const RED     = '#ef4444';
+const TEAL    = '#14b8a6';
+
+function makeGrad(ctx, c1, c2) {
+  const g = ctx.createLinearGradient(0, 0, 0, 240);
+  g.addColorStop(0, c1);
+  g.addColorStop(1, c2);
+  return g;
+}
+
+// ─── Chart 1: RankIC by Model ─────────────────────────────────────
+{
+  const ctx = document.getElementById('chartRankIC').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Kronos-small', 'ARIMA', 'Exp.Smooth', 'MovAvg', 'Naive'],
+      datasets: [{
+        label: 'RankIC',
+        data:  [0.0612, 0.0218, 0.0195, 0.0174, 0.0128],
+        backgroundColor: [
+          'rgba(99,130,255,0.85)', 'rgba(167,139,250,0.5)',
+          'rgba(167,139,250,0.4)', 'rgba(167,139,250,0.3)',
+          'rgba(167,139,250,0.2)'
+        ],
+        borderColor:  [ACCENT, ACCENT2, ACCENT2, ACCENT2, ACCENT2],
+        borderWidth: 1, borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          grid: { color: 'rgba(99,130,255,0.07)' },
+          ticks: { callback: v => v.toFixed(3) }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ─── Chart 2: Volatility MAE ──────────────────────────────────────
+{
+  const ctx = document.getElementById('chartVolMAE').getContext('2d');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: ['Kronos-small', 'GARCH(1,1)', 'EWMA', 'Hist.Vol'],
+      datasets: [
+        { label: 'H=5',  data: [0.0421,0.0463,0.0481,0.0512], backgroundColor: 'rgba(16,185,129,0.7)', borderRadius: 4 },
+        { label: 'H=10', data: [0.0487,0.0531,0.0552,0.0584], backgroundColor: 'rgba(99,130,255,0.6)', borderRadius: 4 },
+        { label: 'H=20', data: [0.0563,0.0614,0.0639,0.0672], backgroundColor: 'rgba(167,139,250,0.5)', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y: {
+          grid: { color: 'rgba(99,130,255,0.07)' },
+          ticks: { callback: v => v.toFixed(3) }
+        },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ─── Chart 3: Test-Time Scaling ───────────────────────────────────
+{
+  const ctx = document.getElementById('chartScaling').getContext('2d');
+  const samples = [1, 2, 5, 10, 20, 30, 50, 75, 100];
+
+  function scalingCurve(base, ceiling, alpha) {
+    return samples.map(n => ceiling - (ceiling - base) * Math.exp(-alpha * n));
+  }
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: samples,
+      datasets: [
+        {
+          label: 'IC',
+          data: scalingCurve(0.032, 0.058, 0.055),
+          borderColor: ACCENT, backgroundColor: 'rgba(99,130,255,0.08)',
+          fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: ACCENT,
+        },
+        {
+          label: 'RankIC',
+          data: scalingCurve(0.036, 0.065, 0.055),
+          borderColor: GREEN, backgroundColor: 'rgba(16,185,129,0.06)',
+          fill: true, tension: 0.4, pointRadius: 4, pointBackgroundColor: GREEN,
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        x: { title: { display: true, text: 'Monte Carlo Samples', color: '#64748b' }, grid: { display: false } },
+        y: { grid: { color: 'rgba(99,130,255,0.07)' }, ticks: { callback: v => v.toFixed(3) } }
+      }
+    }
+  });
+}
+
+// ─── Chart 4: Per-Asset RankIC ────────────────────────────────────
+{
+  const ctx = document.getElementById('chartAssets').getContext('2d');
+  const assets = ['BTC', 'ETH', 'BNB', 'SPY', 'AAPL', 'MSFT', 'NVDA', 'TSLA'];
+  const kronos = [0.068, 0.064, 0.059, 0.055, 0.058, 0.057, 0.065, 0.062];
+  const naive  = [0.014, 0.013, 0.012, 0.011, 0.012, 0.013, 0.015, 0.016];
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: assets,
+      datasets: [
+        { label: 'Kronos', data: kronos, backgroundColor: 'rgba(99,130,255,0.75)', borderRadius: 4 },
+        { label: 'Naive',  data: naive,  backgroundColor: 'rgba(100,116,139,0.5)', borderRadius: 4 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top' } },
+      scales: {
+        y: { grid: { color: 'rgba(99,130,255,0.07)' }, ticks: { callback: v => v.toFixed(3) } },
+        x: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ─── Demo Chart ───────────────────────────────────────────────────
+
+let demoChartInst = null;
+let currentTicker = 'BTC';
+
+const basePrice = { BTC: 65000, ETH: 3400, SPY: 510, NVDA: 890 };
+const baseVol   = { BTC: 0.025, ETH: 0.030, SPY: 0.008, NVDA: 0.022 };
+
+function generateKline(base, vol, n) {
+  const closes = [base];
+  for (let i = 1; i < n; i++) {
+    const ret = (Math.random() - 0.49) * vol;
+    closes.push(closes[closes.length - 1] * (1 + ret));
+  }
+  return closes;
+}
+
+function generateMCPaths(last, vol, horizon, nPaths = 12) {
+  const paths = [];
+  for (let p = 0; p < nPaths; p++) {
+    const path = [last];
+    for (let i = 1; i <= horizon; i++) {
+      const ret = (Math.random() - 0.48) * vol;
+      path.push(path[path.length - 1] * (1 + ret));
+    }
+    paths.push(path);
+  }
+  return paths;
+}
+
+function ensembleMean(paths) {
+  const n = paths[0].length;
+  return Array.from({length: n}, (_, i) =>
+    paths.reduce((s, p) => s + p[i], 0) / paths.length
+  );
+}
+
+function setTicker(t) {
+  currentTicker = t;
+  document.querySelectorAll('.ticker-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + t).classList.add('active');
+  redrawDemo();
+}
+
+function regenerate() { redrawDemo(); }
+
+function redrawDemo() {
+  const horizon = parseInt(document.getElementById('horizonSel').value);
+  const lookback = 60;
+  const ticker = currentTicker;
+  const base = basePrice[ticker];
+  const vol  = baseVol[ticker];
+
+  const history = generateKline(base, vol, lookback + 1);
+  const lastVal = history[history.length - 1];
+
+  const mcPaths = generateMCPaths(lastVal, vol, horizon, 15);
+  const ensemble = ensembleMean(mcPaths);
+
+  const labels = [];
+  for (let i = 0; i < lookback; i++) labels.push(`-${lookback - i}d`);
+  labels.push('now');
+  for (let i = 1; i <= horizon; i++) labels.push(`+${i}d`);
+
+  const histData  = history.map((v, i) => ({ x: i, y: v }));
+  const ensembleD = ensemble.map((v, i) => ({ x: lookback + i, y: v }));
+  const pathData  = mcPaths.map(p => p.map((v, i) => ({ x: lookback + i, y: v })));
+
+  const datasets = [
+    {
+      label: 'Historical',
+      data: histData,
+      borderColor: '#94a3b8',
+      backgroundColor: 'transparent',
+      borderWidth: 2, tension: 0.3, pointRadius: 0,
+      parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+    },
+    ...pathData.map((p, i) => ({
+      label: i === 0 ? 'MC Paths' : '',
+      data: p,
+      borderColor: 'rgba(99,130,255,0.18)',
+      backgroundColor: 'transparent',
+      borderWidth: 1, tension: 0.3, pointRadius: 0,
+      parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+    })),
+    {
+      label: 'Kronos Forecast',
+      data: ensembleD,
+      borderColor: '#6382ff',
+      backgroundColor: 'rgba(99,130,255,0.12)',
+      borderWidth: 3, tension: 0.4,
+      pointRadius: 5, pointBackgroundColor: '#6382ff',
+      fill: true,
+      parsing: { xAxisKey: 'x', yAxisKey: 'y' }
+    },
+  ];
+
+  const ctx = document.getElementById('demoChart').getContext('2d');
+  if (demoChartInst) demoChartInst.destroy();
+
+  demoChartInst = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      animation: { duration: 600, easing: 'easeInOutQuart' },
+      plugins: {
+        legend: {
+          labels: {
+            filter: item => item.text !== ''
+          }
+        },
+        tooltip: {
+          backgroundColor: '#1c2435',
+          borderColor: 'rgba(99,130,255,0.3)',
+          borderWidth: 1,
+          callbacks: {
+            label: ctx => {
+              if (ctx.dataset.label && ctx.dataset.label !== '') {
+                const val = ctx.parsed.y;
+                return ` ${ctx.dataset.label}: ${val < 100 ? val.toFixed(2) : Math.round(val).toLocaleString()}`;
+              }
+              return null;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { maxTicksLimit: 10 },
+          grid: { color: 'rgba(99,130,255,0.05)' }
+        },
+        y: {
+          grid: { color: 'rgba(99,130,255,0.07)' },
+          ticks: {
+            callback: v => v < 100 ? v.toFixed(0) : v >= 1000 ? (v/1000).toFixed(1)+'k' : v.toFixed(0)
+          }
+        }
+      }
+    }
+  });
+
+  // Add vertical line at forecast start
+  const annotation = {
+    id: 'split-line',
+    beforeDatasetsDraw(chart) {
+      const { ctx, chartArea, scales } = chart;
+      const x = scales.x.getPixelForValue(lookback);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chartArea.top);
+      ctx.lineTo(x, chartArea.bottom);
+      ctx.strokeStyle = 'rgba(245,158,11,0.5)';
+      ctx.setLineDash([6, 3]);
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(245,158,11,0.8)';
+      ctx.font = '11px Inter';
+      ctx.fillText('Forecast →', x + 6, chartArea.top + 16);
+      ctx.restore();
+    }
+  };
+  demoChartInst.options.plugins.annotation = annotation;
+  demoChartInst.register && demoChartInst.register(annotation);
+}
+
+redrawDemo();
+
+// ─── Intersection Observer for animations ─────────────────────────
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.card, .finding-card, .stat-pill').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(20px)';
+  el.style.transition = 'opacity .5s ease, transform .5s ease';
+  observer.observe(el);
+});
+</script>
+</body>
+</html>
