@@ -6,7 +6,7 @@
 
 ---
 
-## 📌 Overview
+##  Overview
 
 **Kronos** is the first open-source foundation model for financial candlestick (K-line) data, trained on **12 billion+ K-line records** from **45 global exchanges**. It uses a two-stage framework:
 
@@ -23,7 +23,7 @@
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Install Dependencies
 
@@ -60,7 +60,7 @@ Open `interface/index.html` in your browser for an interactive dashboard with al
 ```
 kronos-reproduction/
 ├── interface/
-│   └── index.html          # ✨ Interactive professor-ready dashboard
+│   └── index.html          #  Interactive professor-ready dashboard
 ├── scripts/
 │   ├── fetch_data.py       # Download OHLCVA market data
 │   ├── baselines.py        # Naive, MovAvg, ARIMA, GARCH, EWMA baselines
@@ -77,7 +77,7 @@ kronos-reproduction/
 
 ---
 
-## 🧠 Model Architecture
+##  Model Architecture
 
 ```
 Input (OHLCVA, D=6)
@@ -110,7 +110,7 @@ Input (OHLCVA, D=6)
 
 ---
 
-## 📊 Experiments Reproduced
+##  Experiments Reproduced
 
 ### 1. Price Series Forecasting
 - **Task**: Given 120 bars of history, forecast next H=5/10/20 bars
@@ -134,7 +134,7 @@ Input (OHLCVA, D=6)
 
 ---
 
-## 📈 Using the Pre-trained Model
+##  Using the Pre-trained Model
 
 ```python
 import sys
@@ -165,7 +165,7 @@ print("Forecast (close):", forecast)
 
 ---
 
-## 🏆 Citation
+##  Citation
 
 If you use this reproduction, please cite the original paper:
 
