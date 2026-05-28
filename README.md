@@ -55,7 +55,7 @@ Open `interface/index.html` in your browser for an interactive dashboard with al
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 kronos-reproduction/
