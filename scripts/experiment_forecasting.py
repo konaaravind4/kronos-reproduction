@@ -25,7 +25,7 @@ FIGURES_DIR = ROOT / "figures"
 RESULTS_DIR.mkdir(exist_ok=True)
 FIGURES_DIR.mkdir(exist_ok=True)
 
-# ─── Config ───────────────────────────────────────────────────────────────────
+#  Config 
 
 HORIZONS  = [5, 10, 20]    # forecast steps (trading days)
 LOOKBACK  = 120            # context window
@@ -37,7 +37,7 @@ ASSETS = [
 ]
 
 
-# ─── Load Kronos ─────────────────────────────────────────────────────────────
+#  Load Kronos 
 
 def load_kronos():
     try:
@@ -46,14 +46,14 @@ def load_kronos():
         tokenizer = KronosTokenizer.from_pretrained("NeoQuasar/Kronos-Tokenizer-base")
         model     = Kronos.from_pretrained("NeoQuasar/Kronos-small")
         predictor = KronosPredictor(model, tokenizer, max_context=512)
-        print("  ✅ Kronos-small loaded (24.7M params)")
+        print("   Kronos-small loaded (24.7M params)")
         return predictor
     except Exception as e:
-        print(f"  ⚠️  Could not load Kronos: {e}")
+        print(f"    Could not load Kronos: {e}")
         return None
 
 
-# ─── Kronos Inference ─────────────────────────────────────────────────────────
+#  Kronos Inference 
 
 def kronos_forecast(predictor, ohlcva: np.ndarray, horizon: int,
                     n_samples: int = N_SAMPLES) -> np.ndarray:
@@ -74,7 +74,7 @@ def kronos_forecast(predictor, ohlcva: np.ndarray, horizon: int,
     return np.mean(preds, axis=0)  # Ensemble average
 
 
-# ─── Rolling Evaluation ────────────────────────────────────────────────────────
+#  Rolling Evaluation 
 
 def rolling_evaluation(df: pd.DataFrame, predictor, horizon: int, lookback: int,
                         step: int = 5):
@@ -96,7 +96,7 @@ def rolling_evaluation(df: pd.DataFrame, predictor, horizon: int, lookback: int,
         true_close = closes[i: i + horizon]
         true_ret   = np.diff(true_close) / (ctx_close[-1] + 1e-8)
 
-        # ── Baselines ──
+        #  Baselines 
         preds_baselines = {
             "Naive":     naive_forecast(ctx_close, horizon),
             "MovAvg":    moving_average_forecast(ctx_close, horizon),
@@ -104,7 +104,7 @@ def rolling_evaluation(df: pd.DataFrame, predictor, horizon: int, lookback: int,
             "ARIMA":     arima_forecast(ctx_close, horizon),
         }
 
-        # ── Kronos ──
+        #  Kronos 
         if predictor is not None:
             try:
                 p = kronos_forecast(predictor, ctx_ohlcva, horizon, n_samples=10)
@@ -146,7 +146,7 @@ def rolling_evaluation(df: pd.DataFrame, predictor, horizon: int, lookback: int,
     return agg
 
 
-# ─── Main ──────────────────────────────────────────────────────────────────────
+#  Main 
 
 def main(args):
     print("=" * 65)
@@ -155,7 +155,7 @@ def main(args):
 
     predictor = load_kronos() if not args.no_model else None
     if predictor is None:
-        print("  ⚠️  Running in simulation mode (model unavailable).")
+        print("    Running in simulation mode (model unavailable).")
 
     assets = args.assets if args.assets else ASSETS
     horizons = [int(h) for h in args.horizons.split(",")] if args.horizons else HORIZONS
@@ -169,7 +169,7 @@ def main(args):
             continue
 
         df = pd.read_csv(csv, index_col=0, parse_dates=True)
-        print(f"\n📊 {asset} ({len(df)} test bars)")
+        print(f"\n {asset} ({len(df)} test bars)")
 
         asset_res = {}
         for h in horizons:
@@ -181,13 +181,13 @@ def main(args):
 
         all_results[asset] = asset_res
 
-    # ── Save results ──
+    #  Save results 
     out_path = RESULTS_DIR / "forecasting_results.json"
     with open(out_path, "w") as f:
         json.dump(all_results, f, indent=2, default=float)
-    print(f"\n✅ Saved to: {out_path}")
+    print(f"\n Saved to: {out_path}")
 
-    # ── Print summary table ──
+    #  Print summary table 
     print("\n" + "=" * 65)
     print("  Results Summary  (H=5, RankIC)")
     print("=" * 65)
