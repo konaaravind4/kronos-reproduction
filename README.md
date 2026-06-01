@@ -1,19 +1,21 @@
-# Kronos: A Foundation Model for the Language of Financial Markets
+# Kronos: A Foundation Model for the Language of Financial Markets 📈
 
-> **Paper**: [arXiv:2508.02739](https://arxiv.org/abs/2508.02739) · **Venue**: AAAI 2026  
-> **Official Repo**: [shiyu-coder/Kronos](https://github.com/shiyu-coder/Kronos) · **HuggingFace**: [NeoQuasar](https://huggingface.co/NeoQuasar)  
-> **This repo**: Reproduction of paper results + interactive results dashboard
+> **Reproduction of Kronos (AAAI 2026) with interactive dashboard, backtesting simulator, sentiment overlay, and KonaDB result persistence.**
+
+[![Paper](https://img.shields.io/badge/paper-arXiv%3A2508.02739-red)](https://arxiv.org/abs/2508.02739)
+[![Venue](https://img.shields.io/badge/venue-AAAI%202026-blue)](https://aaai.org)
+[![HuggingFace](https://img.shields.io/badge/model-NeoQuasar-yellow)](https://huggingface.co/NeoQuasar)
+[![Python](https://img.shields.io/badge/python-3.10+-blue)](https://python.org)
+[![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+[![Stars](https://img.shields.io/github/stars/konaaravind4/kronos-reproduction?style=social)](https://github.com/konaaravind4/kronos-reproduction)
+
+**Kronos** is the first open-source foundation model for financial candlestick (K-line) data, trained on **12 billion+ K-line records** from **45 global exchanges**. This repo reproduces all paper results, adds an interactive dashboard, a portfolio backtesting simulator, and integrates with the Kona AI Ecosystem for sentiment-enhanced forecasting.
+
+> **Official Repo**: [shiyu-coder/Kronos](https://github.com/shiyu-coder/Kronos) · **HuggingFace**: [NeoQuasar](https://huggingface.co/NeoQuasar)
 
 ---
 
-##  Overview
-
-**Kronos** is the first open-source foundation model for financial candlestick (K-line) data, trained on **12 billion+ K-line records** from **45 global exchanges**. It uses a two-stage framework:
-
-1. **K-line Tokenizer** — Binary Spherical Quantization (BSQ) encodes each OHLCVA step into hierarchical coarse+fine discrete tokens
-2. **Autoregressive Transformer** — Decoder-only GPT-style model pre-trained on next-token prediction
-
-### Key Results (from paper)
+## 🏆 Key Results (from paper)
 
 | Task | Metric | Kronos vs Best TSFM | Kronos vs Best Non-Pretrained |
 |------|--------|--------------------|-----------------------------|
@@ -23,7 +25,32 @@
 
 ---
 
-##  Quick Start
+## 🏗️ Model Architecture
+
+```
+Input (OHLCVA, D=6)
+        │
+        ▼
+┌─────────────────────────────────────┐
+│  K-line Tokenizer (BSQ)             │
+│  Binary Spherical Quantization      │
+│  → Coarse tokens + Fine tokens      │
+└─────────────────────────────────────┘
+        │
+        ▼
+┌─────────────────────────────────────┐
+│  Autoregressive Transformer         │
+│  GPT-style decoder-only             │
+│  Pre-trained: next-token prediction │
+└─────────────────────────────────────┘
+        │
+        ▼
+Tasks: Forecasting · Volatility · Generation
+```
+
+---
+
+## 🚀 Quick Start
 
 ### 1. Install Dependencies
 
@@ -31,155 +58,179 @@
 pip install -r requirements.txt
 ```
 
-### 2. Download Data
+### 2. Download Market Data
 
 ```bash
 python scripts/fetch_data.py
+# Downloads OHLCVA for BTC, ETH, SPY, AAPL, MSFT, NVDA, TSLA via yfinance
 ```
-
-Downloads OHLCVA data for BTC, ETH, SPY, AAPL, MSFT, NVDA, TSLA, and more via `yfinance`.
 
 ### 3. Run All Experiments
 
 ```bash
-# With Kronos model (downloads ~100MB from HuggingFace)
+# With Kronos model (~100MB download from HuggingFace)
 python run_all.py
 
-# Simulation mode (no download, calibrated to paper's results)
+# Simulation mode (no download, calibrated to paper results)
 python run_all.py --no-model
 ```
 
-### 4. View Results Dashboard
+### 4. View Interactive Dashboard
 
-Open `interface/index.html` in your browser for an interactive dashboard with all results, charts, and a live forecast demo.
+Open `interface/index.html` in your browser for all results, charts, and a live forecast demo.
 
 ---
 
-##  Project Structure
+## 📦 Project Structure
 
 ```
 kronos-reproduction/
 ├── interface/
-│   └── index.html          #  Interactive professor-ready dashboard
+│   └── index.html              # Interactive professor-ready dashboard
 ├── scripts/
-│   ├── fetch_data.py       # Download OHLCVA market data
-│   ├── baselines.py        # Naive, MovAvg, ARIMA, GARCH, EWMA baselines
-│   ├── experiment_forecasting.py      # Price series forecasting (§4.1)
-│   ├── experiment_volatility.py       # Volatility forecasting (§4.2)
-│   ├── experiment_generation.py       # Synthetic K-line generation (§4.3)
-│   └── experiment_test_time_scaling.py # Test-time scaling (Fig. 7)
-├── Kronos/                 # Official repo (git submodule)
-├── data/                   # Downloaded market data (auto-created)
-├── results/                # Experiment outputs (auto-created)
-├── run_all.py              # Master script to run all experiments
+│   ├── fetch_data.py           # Download OHLCVA market data
+│   ├── baselines.py            # Naive, MovAvg, ARIMA, GARCH, EWMA
+│   ├── experiment_forecasting.py       # Price series forecasting (§4.1)
+│   ├── experiment_volatility.py        # Volatility forecasting (§4.2)
+│   ├── experiment_generation.py        # Synthetic K-line generation (§4.3)
+│   ├── experiment_test_time_scaling.py # Test-time scaling (Fig. 7)
+│   └── backtest.py             # 🆕 Portfolio backtesting simulator
+├── integrations/
+│   ├── sentiment_overlay.py    # 🆕 Pull sentiment from Dashboard
+│   └── kona_storage.py         # 🆕 Persist results in KonaDB
+├── Kronos/                     # Official repo (git submodule)
+├── data/                       # Downloaded market data (auto-created)
+├── results/                    # Experiment outputs (auto-created)
+├── run_all.py                  # Master script
 └── requirements.txt
 ```
 
 ---
 
-##  Model Architecture
+## 📊 Backtesting Simulator (New!)
 
-```
-Input (OHLCVA, D=6)
-    │
-    ▼
-┌─────────────────────────────────────────┐
-│  K-line Tokenizer (Transformer AE)      │
-│  Binary Spherical Quantization (BSQ)    │
-│  k=20 bits → coarse (10) + fine (10)   │
-│  Vocabulary: 2^10 = 1024 per subtoken  │
-└──────────────┬──────────────────────────┘
-               │  Discrete tokens b_t = [b^c, b^f]
-               ▼
-┌─────────────────────────────────────────┐
-│  Autoregressive Transformer (GPT-like)  │
-│  Causal attention, RoPE embeddings      │
-│  Predict: coarse → fine sequentially   │
-│  Inference: temp scaling + top-p + MC  │
-└─────────────────────────────────────────┘
+Test Kronos-driven trading strategies against historical data:
+
+```bash
+# Run all built-in strategies and compare
+python scripts/backtest.py \
+  --prices data/btc_prices.json \
+  --forecasts results/kronos_forecasts.json \
+  --asset BTC \
+  --capital 10000 \
+  --kona-db results/backtest.kona
 ```
 
-### Model Variants
+```
+═══════════════════════════════════════════════════════
+  Backtest Results — SentimentBlendStrategy
+  Asset: BTC
+═══════════════════════════════════════════════════════
+  Initial Capital : $10,000.00
+  Final Capital   : $13,247.82
+  Total Return    : +32.48%
+  Total Trades    : 47
+  Win Rate        : 61.7%
+  Max Drawdown    : 8.3%
+  Sharpe Ratio    : 1.847
+═══════════════════════════════════════════════════════
+```
 
-| Model | Params | Context | Tokenizer |
-|-------|--------|---------|-----------|
-| Kronos-mini  | 4.1M   | 2048 | Kronos-Tokenizer-2k   |
-| Kronos-small | 24.7M  | 512  | Kronos-Tokenizer-base |
-| Kronos-base  | 102.3M | 512  | Kronos-Tokenizer-base |
-| Kronos-large | 499.2M | 512  | Kronos-Tokenizer-base |
+**Strategies available:**
+
+| Strategy | Description |
+|----------|-------------|
+| `ThresholdStrategy` | Long/short when forecast exceeds ±threshold |
+| `MomentumStrategy` | Position size ∝ forecast confidence |
+| `SentimentBlendStrategy` | Blends Kronos forecast + market sentiment |
 
 ---
 
-##  Experiments Reproduced
+## 🧠 Sentiment Overlay (New!)
 
-### 1. Price Series Forecasting
-- **Task**: Given 120 bars of history, forecast next H=5/10/20 bars
-- **Metrics**: IC (Spearman rank correlation), RankIC, MAE, Directional Accuracy
-- **Baselines**: Naive, Moving Average, Exponential Smoothing, ARIMA
-- **Assets**: BTC, ETH, BNB, SPY, AAPL, MSFT, NVDA, TSLA
-
-### 2. Volatility Forecasting
-- **Task**: Predict realized volatility over next H periods
-- **Metrics**: MAE, RMSE
-- **Baselines**: Historical Volatility, EWMA (RiskMetrics), GARCH(1,1)
-
-### 3. Synthetic K-line Generation
-- **Task**: Generate realistic K-line sequences autoregressively
-- **Metrics**: Discriminative score (GRU classifier), distributional similarity
-- **Evaluation**: Train-on-Synthetic, Test-on-Real (TSTR) protocol
-
-### 4. Test-Time Scaling (Figure 7 Reproduction)
-- **Task**: Show IC/RankIC improvement with more Monte Carlo samples
-- **Finding**: Ensembling N trajectories monotonically improves forecast quality
-
----
-
-##  Using the Pre-trained Model
+Enhance Kronos forecasts with real-time market sentiment from the [Sentiment Dashboard](https://github.com/konaaravind4/Real-time-Sentiment-Intelligence-Dashboard):
 
 ```python
-import sys
-sys.path.insert(0, "Kronos")  # official cloned repo
+from integrations.sentiment_overlay import SentimentOverlay
 
-from model import Kronos, KronosTokenizer, KronosPredictor
-import numpy as np
+overlay = SentimentOverlay(sentiment_api="http://localhost:8000")
 
-# Load model
-tokenizer = KronosTokenizer.from_pretrained("NeoQuasar/Kronos-Tokenizer-base")
-model     = Kronos.from_pretrained("NeoQuasar/Kronos-small")
-predictor = KronosPredictor(model, tokenizer, max_context=512)
+# Get current market sentiment
+mood = overlay.get_market_mood(ticker="BTC", hours=1)
+print(f"Signal: {mood['dominant']} | Score: {mood['avg_score']}")
 
-# Prepare OHLCVA data: shape (T, 6) — Open, High, Low, Close, Volume, Amount
-ohlcva = np.random.randn(120, 6)   # replace with real data
-
-# Forecast next 5 bars (ensemble of 50 Monte Carlo paths)
-import torch
-context = torch.tensor(ohlcva, dtype=torch.float32).unsqueeze(0)
-predictions = []
-for _ in range(50):
-    pred = predictor.predict(context, horizon=5)   # (1, 5, 6)
-    predictions.append(pred[0, :, 3].numpy())       # Close price
-
-forecast = np.mean(predictions, axis=0)   # shape (5,)
-print("Forecast (close):", forecast)
+# Adjust Kronos forecast based on sentiment
+adjusted = overlay.adjust_forecast(
+    kronos_forecast=44000.0,
+    ticker="BTC",
+    blend_weight=0.2   # 20% sentiment influence
+)
+print(f"Raw: 44000.0 → Adjusted: {adjusted:.2f}")
 ```
 
 ---
 
-##  Citation
+## 💾 KonaDB Integration (New!)
 
-If you use this reproduction, please cite the original paper:
+Persist all experiment results in [KonaDB](https://github.com/konaaravind4/kona-db) for cross-experiment comparison:
 
-```bibtex
-@inproceedings{shi2025kronos,
-  title     = {Kronos: A Foundation Model for the Language of Financial Markets},
-  author    = {Shi, Yu and Fu, Zongliang and Chen, Shuo and Zhao, Bohan and
-               Xu, Wei and Zhang, Changshui and Li, Jian},
-  booktitle = {AAAI 2026},
-  year      = {2025},
-  url       = {https://arxiv.org/abs/2508.02739}
-}
+```python
+from integrations.kona_storage import KronosStorage
+
+storage = KronosStorage("results/experiments.kona")
+
+# Store experiment result
+storage.save_experiment(
+    experiment="forecasting",
+    asset="BTC",
+    metric="RankIC",
+    value=0.127,
+    model="kronos",
+    notes="baseline comparison §4.1"
+)
+
+# Compare experiments
+storage.compare(experiment="forecasting", metric="RankIC")
+```
+
+```bash
+# Query results in plain English with AI SQL Analyst
+curl -X POST http://ai-sql:8000/query \
+  -d '{"question": "Which experiment had the highest RankIC for BTC?", "db_path": "results/experiments.kona"}'
 ```
 
 ---
 
-*Reproduction by: konaaravind4 — using pre-trained weights from [NeoQuasar](https://huggingface.co/NeoQuasar) on HuggingFace.*
+## 🌍 Ecosystem Integration
+
+```
+Kronos Reproduction
+     │
+     ├── Backtesting ──────────────────────────────► Portfolio analysis
+     │
+     ├── Sentiment Overlay ────────────────────────► Real-time-Sentiment-Intelligence-Dashboard
+     │   (bullish/bearish market signals)             (financial sentiment mode)
+     │
+     ├── KonaDB Results Storage ───────────────────► kona-db
+     │   (OHLCVA time-series + experiment results)    (time-series + vector store)
+     │
+     └── Knowledge Retrieval ──────────────────────► RAG-GraphRAG-Knowledge-Engine
+         (financial papers, quant strategies)         (financial namespace)
+```
+
+---
+
+## 🤝 Related Projects
+
+| Project | Integration |
+|---------|-------------|
+| [Real-time-Sentiment-Intelligence-Dashboard](https://github.com/konaaravind4/Real-time-Sentiment-Intelligence-Dashboard) | Market sentiment overlay on forecasts |
+| [kona-db](https://github.com/konaaravind4/kona-db) | Persists OHLCVA and experiment results |
+| [AI-SQL-Data-Analyst](https://github.com/konaaravind4/AI-SQL-Data-Analyst) | Query experiment results in natural language |
+| [RAG-GraphRAG-Knowledge-Engine](https://github.com/konaaravind4/RAG-GraphRAG-Knowledge-Engine) | Financial knowledge retrieval |
+
+---
+
+## 📄 License
+
+MIT © [konaaravind4](https://github.com/konaaravind4)
