@@ -1,4 +1,4 @@
-# Kronos: A Foundation Model for the Language of Financial Markets 📈
+# Kronos: A Foundation Model for the Language of Financial Markets 
 
 > **Reproduction of Kronos (AAAI 2026) with interactive dashboard, backtesting simulator, sentiment overlay, and KonaDB result persistence.**
 
@@ -15,7 +15,7 @@
 
 ---
 
-## 🏆 Key Results (from paper)
+##  Key Results (from paper)
 
 | Task | Metric | Kronos vs Best TSFM | Kronos vs Best Non-Pretrained |
 |------|--------|--------------------|-----------------------------|
@@ -25,7 +25,7 @@
 
 ---
 
-## 🏗️ Model Architecture
+##  Model Architecture
 
 ```
 Input (OHLCVA, D=6)
@@ -50,7 +50,7 @@ Tasks: Forecasting · Volatility · Generation
 
 ---
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Install Dependencies
 
@@ -81,7 +81,7 @@ Open `interface/index.html` in your browser for all results, charts, and a live 
 
 ---
 
-## 📦 Project Structure
+##  Project Structure
 
 ```
 kronos-reproduction/
@@ -107,7 +107,7 @@ kronos-reproduction/
 
 ---
 
-## 📊 Backtesting Simulator (New!)
+##  Backtesting Simulator (New!)
 
 Test Kronos-driven trading strategies against historical data:
 
@@ -146,7 +146,7 @@ python scripts/backtest.py \
 
 ---
 
-## 🧠 Sentiment Overlay (New!)
+##  Sentiment Overlay (New!)
 
 Enhance Kronos forecasts with real-time market sentiment from the [Sentiment Dashboard](https://github.com/konaaravind4/Real-time-Sentiment-Intelligence-Dashboard):
 
@@ -170,7 +170,7 @@ print(f"Raw: 44000.0 → Adjusted: {adjusted:.2f}")
 
 ---
 
-## 💾 KonaDB Integration (New!)
+##  KonaDB Integration (New!)
 
 Persist all experiment results in [KonaDB](https://github.com/konaaravind4/kona-db) for cross-experiment comparison:
 
@@ -201,7 +201,7 @@ curl -X POST http://ai-sql:8000/query \
 
 ---
 
-## 🌍 Ecosystem Integration
+##  Ecosystem Integration
 
 ```
 Kronos Reproduction
@@ -220,7 +220,7 @@ Kronos Reproduction
 
 ---
 
-## 🤝 Related Projects
+##  Related Projects
 
 | Project | Integration |
 |---------|-------------|
@@ -231,6 +231,6 @@ Kronos Reproduction
 
 ---
 
-## 📄 License
+##  License
 
 MIT © [konaaravind4](https://github.com/konaaravind4)
